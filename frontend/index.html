@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Search Ranking System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    Rankings update every 30 seconds · powered by Kafka + Flink + Redis
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+          <rect width="26" height="26" rx="7" fill="#111"/>
+          <path d="M7 13l4 4 8-8" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Real-Time Search Ranking System</span>
+      </div>
+
+      <div class="search-bar-header">
+        <svg class="s-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search products…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="search-btn">Search</button>
+      </div>
+
+      <div class="header-tag">
+        Kafka · Flink · Redis
+      </div>
+    </div>
+  </header>
+
+  <!-- Categories -->
+  <div class="categories">
+    <div class="categories-inner">
+      <button class="cat active" onclick="quickSearch('headphones', this)">🎧 Headphones</button>
+      <button class="cat" onclick="quickSearch('tv', this)">📺 TVs</button>
+      <button class="cat" onclick="quickSearch('phones', this)">📱 Phones</button>
+      <button class="cat" onclick="quickSearch('shoes', this)">👟 Shoes</button>
+      <button class="cat" onclick="quickSearch('laptops', this)">💻 Laptops</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Results -->
+    <div class="results-col">
+      <div class="results-header">
+        <div>
+          <h2 class="results-title" id="results-title">Headphones</h2>
+          <p class="results-meta" id="meta">Ranked by real user clicks · updates every 30s</p>
+        </div>
+        <div class="sort-pill">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M7 12h10M11 18h2"/>
+          </svg>
+          Sorted by click score
+        </div>
+      </div>
+
+      <div class="results-grid" id="results-grid">
+        <div class="empty-state">
+          <div class="empty-ring">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </div>
+          <p class="empty-title">Loading results…</p>
+          <p class="empty-sub">Fetching ranked products from Redis</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+      <div class="sidebar-card">
+        <div class="sc-header">
+          <div>
+            <h3 class="sc-title">A/B Ranking Experiment</h3>
+            <p class="sc-sub">Which strategy drives more clicks?</p>
+          </div>
+          <button class="refresh-btn" id="ctr-btn" title="Refresh">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+              <path d="M8 16H3v5"/>
+            </svg>
+          </button>
+        </div>
+
+        <div id="ctr-data">
+
+          <div class="variant-block">
+            <div class="variant-row">
+              <div class="variant-left">
+                <span class="v-badge v-a">A</span>
+                <div>
+                  <div class="v-name">Recency-weighted</div>
+                  <div class="v-desc">Recent clicks score higher</div>
+                </div>
+              </div>
+              <div class="v-ctr" id="ctr-a-val">—</div>
+            </div>
+            <div class="bar-track"><div class="bar bar-a" id="bar-a"></div></div>
+            <div class="v-stats" id="stats-a-val">Waiting for data…</div>
+          </div>
+
+          <div class="variant-sep"></div>
+
+          <div class="variant-block">
+            <div class="variant-row">
+              <div class="variant-left">
+                <span class="v-badge v-b">B</span>
+                <div>
+                  <div class="v-name">Frequency-based</div>
+                  <div class="v-desc">All-time clicks count equally</div>
+                </div>
+              </div>
+              <div class="v-ctr" id="ctr-b-val">—</div>
+            </div>
+            <div class="bar-track"><div class="bar bar-b" id="bar-b"></div></div>
+            <div class="v-stats" id="stats-b-val">Waiting for data…</div>
+          </div>
+
+          <div class="winner-box" id="ab-winner"></div>
+
+        </div>
+      </div>
+
+      <div class="sidebar-card how-card">
+        <h3 class="sc-title" style="margin-bottom:4px">How rankings work</h3>
+        <p class="sc-sub" style="margin-bottom:18px">Click any product card to influence the ranking</p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-n">1</div>
+            <div>
+              <div class="step-title">You click a product</div>
+              <div class="step-desc">Captured instantly by the browser</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-n">2</div>
+            <div>
+              <div class="step-title">Kafka queues the event</div>
+              <div class="step-desc">Fault-tolerant distributed stream</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-n">3</div>
+            <div>
+              <div class="step-title">Flink scores it</div>
+              <div class="step-desc">Aggregated in a 30-second window</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-n">4</div>
+            <div>
+              <div class="step-title">Redis serves it</div>
+              <div class="step-desc">Under 1ms sorted-set read</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

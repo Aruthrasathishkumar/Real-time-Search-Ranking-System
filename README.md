@@ -6,44 +6,11 @@ A distributed systems project that ranks search results in real time based on us
 
 > **Note:** The live demo runs in static demo mode with pre-loaded data. The full real-time pipeline (click tracking → Kafka → Flink → Redis → live rankings) requires local setup with the infrastructure running. Please follow the local setup instructions given below.
 
----
 
-## Architecture
+## System Architecture
 
-```
-Browser
-  │
-  │  search query
-  ▼
-Search API (Node.js · port 3000)
-  │
-  ├── Level 1: LRU Cache (in-memory · 0ms)
-  ├── Level 2: Redis Sorted Set (ZREVRANGE · ~1ms)
-  └── Level 3: Fallback (products.json · first request only)
-  
-Browser
-  │
-  │  click event (sendBeacon)
-  ▼
-Collection API (Node.js · port 3001)
-  │
-  ▼
-Apache Kafka (topic: user-clicks · 4 partitions)
-  │
-  ▼
-Apache Flink (ClickStreamJob · 30s tumbling windows)
-  │
-  ▼
-Redis Sorted Sets
-  ├── headphones:A  →  sony-wh1000: 42, bose-qc45: 28 ...
-  └── headphones:B  →  sony-wh1000: 42, bose-qc45: 28 ...
-  
-Redis Hash (A/B CTR tracking)
-  ├── ctr:A  →  { searches: 142, clicks: 18 }
-  └── ctr:B  →  { searches: 138, clicks: 23 }
-```
+<img src="./Real-time search ranking system Architecture diagram.png" width="800"/>
 
----
 
 ## Tech Stack
 
@@ -58,7 +25,6 @@ Redis Hash (A/B CTR tracking)
 
 **No ML used.** Rankings are computed purely from click frequency and recency - a deliberate engineering choice that keeps the system deterministic, debuggable, and fast.
 
----
 
 ## Key Features
 
@@ -68,7 +34,6 @@ Redis Hash (A/B CTR tracking)
 - **Kafka-backed event stream** : click events partitioned by userId for ordered processing; replayable from earliest offset
 - **Weighted click simulation** : `scripts/simulate.js` sends 100 realistic fake click events to demonstrate ranking changes at scale
 
----
 
 ## System Design Decisions
 
@@ -94,7 +59,6 @@ After the first request for any query, the result is cached in both Redis and LR
 
 `Math.random()` would assign a different variant on every request - making CTR measurements meaningless. MD5 hashing the userId produces a deterministic number that maps consistently to A or B. The same user always gets the same variant across sessions and devices, giving clean experiment data.
 
----
 
 ## Project Structure
 
@@ -132,7 +96,6 @@ After the first request for any query, the result is cached in both Redis and LR
 └── app.js                        # IS_LOCAL detection → real or demo mode
 ```
 
----
 
 ## Running Locally
 
@@ -212,7 +175,6 @@ HGETALL ctr:A
 HGETALL ctr:B
 ```
 
----
 
 ## What I Would Do Differently at Production Scale
 

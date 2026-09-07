@@ -2,7 +2,7 @@
 
 A distributed systems project that ranks search results in real time based on user click behaviour. Every click flows through a streaming pipeline - captured by a collection API, queued in Apache Kafka, scored by Apache Flink in 30-second windows, and served from Redis sorted sets in under 1ms. An A/B testing layer runs a live experiment comparing two ranking strategies.
 
-**Live demo:** https://aruthrasathishkumar.github.io/Real-time-Search-Ranking-System/
+**Live demo:** https://aruthrasathish.github.io/Real-time-Search-Ranking-System/
 
 > **Note:** The live demo runs in static demo mode with pre-loaded data. The full real-time pipeline (click tracking → Kafka → Flink → Redis → live rankings) requires local setup with the infrastructure running. Please follow the local setup instructions given below.
 
